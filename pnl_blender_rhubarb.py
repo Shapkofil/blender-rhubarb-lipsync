@@ -54,6 +54,48 @@ class RhubarbLipsyncPanel(bpy.types.Panel):
             row.label(text="Rhubarb Lipsync requires a pose library")
 
 
+class RhubarbLipsyncPencilPanel(bpy.types.Panel):
+    bl_idname = "DATA_PT_rhubarb_lipsync_pencil"
+    bl_label = "Rhubarb Lipsync for Grease Pencil"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "data"
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return (obj and obj.type == 'GPENCIL')
+
+
+    def draw(self, context):
+        layout = self.layout
+
+        prop = context.object.data.mouth_shapes
+
+        col = layout.column()
+        col.prop(prop, 'mouth_a', text="Mouth A (MBP)")
+        col.prop(prop, 'mouth_b', text="Mouth B (EE/etc)")
+        col.prop(prop, 'mouth_c', text="Mouth C (E)")
+        col.prop(prop, 'mouth_d', text="Mouth D (AI)")
+        col.prop(prop, 'mouth_e', text="Mouth E (O)")
+        col.prop(prop, 'mouth_f', text="Mouth F (WQ)")
+        col.prop(prop, 'mouth_g', text="Mouth G (FV)")
+        col.prop(prop, 'mouth_h', text="Mouth H (L)")
+        col.prop(prop, 'mouth_x', text="Mouth X (rest)")
+
+        row = layout.row(align=True)
+        row.prop(prop, 'sound_file', text='Sound file')
+
+        row = layout.row(align=True)
+        row.prop(prop, 'dialog_file', text='Dialog file')
+
+        row = layout.row(align=True)
+        row.prop(prop, 'start_frame', text='Start frame')
+
+        row = layout.row(align=True)
+        row.operator(operator = "object.rhubarb_pencil_lipsync")
+
+
 pose_markers = []
 
 def pose_markers_items(self, context):
@@ -89,13 +131,60 @@ class MouthShapesProperty(bpy.types.PropertyGroup):
 
     start_frame : bpy.props.IntProperty(name="start_frame")
 
+
+layer_markers = []
+
+def layer_markers_items(self, context):
+    """Dynamic list of items for Object.layer_libs_for_char."""
+
+    lib = context.object.data.layers
+
+    if not context or not context.object:
+        return []
+
+    layer_markers = [(marker, marker, 'Layers', '', idx) for idx, marker in enumerate(lib.keys())]
+    return layer_markers
+
+layers = bpy.props.EnumProperty(
+    items=layer_markers_items,
+    name='Layers',
+    description='Layers',
+)
+
+
+
+class MouthLayersProperty(bpy.types.PropertyGroup):
+    mouth_a : layers
+    mouth_b : layers
+    mouth_c : layers
+    mouth_d : layers
+    mouth_e : layers
+    mouth_f : layers
+    mouth_g : layers
+    mouth_h : layers
+    mouth_x : layers
+
+    sound_file : bpy.props.StringProperty(name="sound_file",subtype='FILE_PATH')
+    dialog_file : bpy.props.StringProperty(name="dialog_file",subtype='FILE_PATH')
+
+    start_frame : bpy.props.IntProperty(name="start_frame")
+
+
+
 def register():
     bpy.utils.register_class(MouthShapesProperty)
     bpy.utils.register_class(RhubarbLipsyncPanel)
 
+    bpy.utils.register_class(MouthLayersProperty)
+    bpy.utils.register_class(RhubarbLipsyncPencilPanel)
+
     bpy.types.Action.mouth_shapes = bpy.props.PointerProperty(type=MouthShapesProperty)
+    bpy.types.GreasePencil.mouth_shapes = bpy.props.PointerProperty(type=MouthLayersProperty)
 
 
 def unregister():
     bpy.utils.unregister_class(MouthShapesProperty)
     bpy.utils.unregister_class(RhubarbLipsyncPanel)
+
+    bpy.utils.unregister_class(MouthLayersProperty)
+    bpy.utils.unregister_class(RhubarbLipsyncPencilPanel)
